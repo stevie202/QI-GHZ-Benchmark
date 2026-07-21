@@ -13,12 +13,18 @@ Note: Zscaler may require adding your corp CA bundle via REQUESTS_CA_BUNDLE
 if SSL errors appear.
 """
 
+import argparse
+
 from qiskit import QuantumCircuit, transpile
 import matplotlib.pyplot as plt
 
 from qiskit_quantuminspire.qi_provider import QIProvider
 
 SHOTS = 4096
+BACKENDS = ["QX emulator", "Tuna-5", "Ry emulator", "Tuna-9", "Tuna-17"]
+DEFAULT_SIZES = {
+    "Tuna-17": (2, 3, 5, 8, 12),
+}
 
 
 def ghz_circuit(n: int) -> QuantumCircuit:
@@ -56,7 +62,7 @@ def run_benchmark(backend_name: str, sizes=(2, 3, 4, 5)) -> dict:
     return results
 
 
-def plot(all_results: dict):
+def plot(all_results: dict, backend_name: str):
     """all_results: {backend_name: {n_qubits: fidelity}}"""
     for name, res in all_results.items():
         ns = sorted(res)
@@ -68,18 +74,16 @@ def plot(all_results: dict):
     plt.legend()
     plt.grid(alpha=0.3)
     plt.tight_layout()
-    plt.savefig("ghz_fidelity.png", dpi=150)
-    print("Saved ghz_fidelity.png")
+    filename = f"ghz_fidelity_{backend_name.replace(' ', '_')}.png"
+    plt.savefig(filename, dpi=150)
+    print(f"Saved {filename}")
 
 
 if __name__ == "__main__":
-    all_results = {}
+    parser = argparse.ArgumentParser(description="Run the GHZ fidelity benchmark on a Quantum Inspire backend.")
+    parser.add_argument("backend", choices=BACKENDS, help="Backend to benchmark")
+    args = parser.parse_args()
 
-    # 1. Start on the emulator (fast, ideal-ish)
-    all_results["QX emulator"] = run_benchmark("QX emulator")
-
-    # 2. Then uncomment for real hardware (queued jobs, be patient)
-    # all_results["Tuna-5"] = run_benchmark("Tuna-5", sizes=(2, 3, 4, 5))
-    # all_results["Tuna-17"] = run_benchmark("Tuna-17", sizes=(2, 3, 5, 8, 12))
-
-    plot(all_results)
+    sizes = DEFAULT_SIZES.get(args.backend, (2, 3, 4, 5))
+    results = {args.backend: run_benchmark(args.backend, sizes=sizes)}
+    plot(results, args.backend)

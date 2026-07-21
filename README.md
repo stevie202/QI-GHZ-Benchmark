@@ -47,11 +47,13 @@ via the `qi` CLI.
 ## Usage
 
 ````
-py qi_bell_benchmark.py
+py qi_bell_benchmark.py "QX emulator"
 ````
 
-Runs GHZ sizes 2–5 on the QX emulator by default. Uncomment the Tuna lines in
-`__main__` for real hardware (jobs queue, expect a wait).
+Pass one of `"QX emulator"`, `"Tuna-5"`, `"Ry emulator"`, `"Tuna-9"`, `"Tuna-17"`
+as the backend argument (quote names containing spaces). GHZ sizes default to
+2–5, except Tuna-17 which runs 2, 3, 5, 8, 12. Hardware jobs queue — expect a
+wait.
 
 **Hardware note:** circuits must be transpiled to the chip's topology before
 submission — `transpile(qc, backend)` handles qubit mapping and SWAP routing.
@@ -61,7 +63,8 @@ mapping error.
 ## Output
 
 - Per-backend fidelity printed to console
-- `ghz_fidelity.png` — fidelity decay chart
+- `ghz_fidelity_<backend>.png` — fidelity decay chart for the selected backend
+  (e.g. `ghz_fidelity_QX_emulator.png`)
 
 ## Roadmap
 
