@@ -31,25 +31,26 @@ def ghz_circuit(n: int) -> QuantumCircuit:
     return qc
 
 
-def ghz_fidelity(counts: dict, n: int, shots: int) -> float:
+def ghz_fidelity(counts: dict, n: int) -> float:
     """Fraction of shots landing in the two ideal GHZ outcomes."""
     zeros = "0" * n
     ones = "1" * n
     good = counts.get(zeros, 0) + counts.get(ones, 0)
-    return good / shots
+    return good / sum(counts.values())
 
 
 def run_benchmark(backend_name: str, sizes=(2, 3, 4, 5)) -> dict:
     provider = QIProvider()
     print("Available backends:", [b.name for b in provider.backends()])
     backend = provider.get_backend(backend_name)
+    shots = min(SHOTS, backend.max_shots)
 
     results = {}
     for n in sizes:
         qc = transpile(ghz_circuit(n), backend)
-        job = backend.run(qc, shots=SHOTS)
+        job = backend.run(qc, shots=shots)
         counts = job.result().get_counts()
-        fid = ghz_fidelity(counts, n, SHOTS)
+        fid = ghz_fidelity(counts, n)
         results[n] = fid
         print(f"{backend_name} | {n} qubits | GHZ fidelity: {fid:.3f}")
     return results
