@@ -1,0 +1,5 @@
+.env
+*.json          # or specifically any qi config/token files
+__pycache__/
+*.png           # optional — keeps result charts out
+.venv/
