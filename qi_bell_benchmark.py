@@ -102,7 +102,15 @@ def run_benchmark(backend_name: str, sizes=(2, 3, 4, 5)) -> dict:
         except JobTimeoutError as e:
             print(f"{backend_name} | {n} qubits | {e} — skipping (check later with `qi results get {job.job_id()}`)")
             continue
-        counts = job.result().get_counts()
+        try:
+            counts = job.result().get_counts()
+        except ValueError as e:
+            print(
+                f"{backend_name} | {n} qubits | job {job.job_id()} returned an unparseable readout ({e}) — "
+                "likely a hardware bit that failed to resolve to 0/1 (a known qiskit-quantuminspire parsing "
+                "bug, not specific to this script); skipping"
+            )
+            continue
         fid = ghz_fidelity(counts, n)
         results[n] = fid
         print(f"{backend_name} | {n} qubits | GHZ fidelity: {fid:.3f}")
