@@ -86,16 +86,39 @@ col_text, col_circuit, col_hist = st.columns([1.2, 1, 1])
 with col_text:
     st.markdown(
         """
-Each run entangles qubits into a **GHZ state** (a **Bell** state when n=2): a
-Hadamard on qubit 0, then a chain of CNOTs cascading down the register. Ideally,
-every measurement collapses to all-0s or all-1s — nothing in between.
+**New to quantum computing? Here's the short version:**
 
-**Fidelity** is the fraction of shots landing in one of those two outcomes.
-On the QX emulator it stays close to 1.0. On real Tuna hardware it decays as
-circuit size grows: limited qubit connectivity forces extra SWAP gates during
-transpilation, and deeper circuits accumulate more noise.
+A **qubit** is the quantum version of a computer bit — like a coin that can
+land heads, tails, or (while still spinning) some mix of both. We link a
+few qubits together — called **entanglement** — so tightly that measuring
+one forces all the others to agree: they all come up "heads," or they all
+come up "tails," never a mix. That specific all-agree state is a **GHZ
+state** (or a **Bell state**, for just 2 qubits).
+
+**Fidelity** is simply: out of everything we tried, how often did we
+actually get that perfect all-agree result? `1.000` = every single time.
+Lower means noise crept in and broke the link before we could measure it.
+
+We run the same test on a perfect **emulator** (a noise-free simulation on
+an ordinary computer — always near 1.000) and on QuTech's **real quantum
+chips** (Tuna-5/9/17), where physical imperfections make fidelity drop as
+we entangle more qubits. That drop is a live readout of how good the real
+hardware currently is.
         """
     )
+    with st.expander("More technical detail"):
+        st.markdown(
+            """
+Each run builds the GHZ state as: a Hadamard on qubit 0, then a chain of
+CNOTs cascading down the register. Ideally every measurement collapses to
+all-0s or all-1s — nothing in between — and fidelity is the fraction of
+shots landing in one of those two outcomes.
+
+On real Tuna hardware, fidelity decays as circuit size grows: limited
+qubit connectivity forces extra SWAP gates during transpilation, and
+deeper circuits accumulate more gate noise.
+            """
+        )
 with col_circuit:
     st.pyplot(ghz_circuit_figure(3))
     st.caption("3-qubit GHZ circuit (same pattern for any size)")
