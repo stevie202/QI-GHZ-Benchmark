@@ -19,12 +19,19 @@ circuits accumulate more noise. That decay curve is the point of the project.
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.10+ (avoid brand-new Python releases — numpy/qiskit wheels lag behind;
+  if `pip install` tries to compile from source, switch to an older interpreter)
 - A free [Quantum Inspire account](https://www.quantum-inspire.com/)
+- [pipx](https://pipx.pypa.io/stable/installation) (for installing the `qi` CLI)
 
 ````
 py -m pip install qiskit qiskit-quantuminspire matplotlib
+pipx install quantuminspire
 ````
+
+`qiskit-quantuminspire` is the Qiskit provider library used by the script.
+The `qi` CLI is a separate package (`quantuminspire` on PyPI) that only handles
+login/auth — it isn't pulled in by the provider install above.
 
 ## Setup
 
@@ -61,17 +68,3 @@ mapping error.
 - [ ] Tuna-5 / Tuna-9 / Tuna-17 hardware comparison
 - [ ] Circuit depth vs fidelity (transpilation cost per backend)
 - [ ] Web dashboard for results
-````
-````
-
-And the matching `.gitignore`:
-
-````
-__pycache__/
-.venv/
-.env
-*.png
-qi-config*.json
-````
-
-The Roadmap section doubles as your project plan — tick items off as commits land. Suggested repo name: `qi-ghz-benchmark`.
