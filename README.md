@@ -12,6 +12,7 @@ ideal baseline.
 - Scores each run by GHZ fidelity: the fraction of shots landing in the two
   ideal outcomes (`00…0` / `11…1`)
 - Plots fidelity vs GHZ size per backend (`ghz_fidelity.png`)
+- Logs every run to `results.jsonl` and visualizes history in a Streamlit dashboard
 
 On the emulator, fidelity stays ~1.0. On real hardware it droops as circuits grow —
 limited qubit connectivity forces SWAP insertion during transpilation, and deeper
@@ -25,7 +26,7 @@ circuits accumulate more noise. That decay curve is the point of the project.
 - [pipx](https://pipx.pypa.io/stable/installation) (for installing the `qi` CLI)
 
 ````
-py -m pip install qiskit qiskit-quantuminspire matplotlib
+py -m pip install qiskit qiskit-quantuminspire matplotlib streamlit plotly pandas
 pipx install quantuminspire
 ````
 
@@ -65,9 +66,23 @@ mapping error.
 - Per-backend fidelity printed to console
 - `ghz_fidelity_<backend>.png` — fidelity decay chart for the selected backend
   (e.g. `ghz_fidelity_QX_emulator.png`)
+- `results.jsonl` — one line per (backend, GHZ size) result, appended on every
+  run: timestamp, backend, n_qubits, fidelity, shots. Not committed by default
+  (see `.gitignore`) since it's a per-machine run history.
+
+## Dashboard
+
+````
+py -3.12 -m streamlit run dashboard.py
+````
+
+Reads `results.jsonl` and shows, per backend: latest fidelity vs GHZ size,
+fidelity over time at the largest size tested (useful for spotting hardware
+drift/decay across days), and a raw results table. Filter backends from the
+sidebar. Run `qi_bell_benchmark.py` at least once first — the dashboard shows
+a message if the log is empty.
 
 ## Roadmap
 
 - [ ] Tuna-5 / Tuna-9 / Tuna-17 hardware comparison
 - [ ] Circuit depth vs fidelity (transpilation cost per backend)
-- [ ] Web dashboard for results

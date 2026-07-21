@@ -14,6 +14,8 @@ if SSL errors appear.
 """
 
 import argparse
+import json
+from datetime import datetime, timezone
 
 from qiskit import QuantumCircuit, transpile
 import matplotlib.pyplot as plt
@@ -25,6 +27,7 @@ BACKENDS = ["QX emulator", "Tuna-5", "Ry emulator", "Tuna-9", "Tuna-17"]
 DEFAULT_SIZES = {
     "Tuna-17": (2, 3, 5, 8, 12),
 }
+RESULTS_LOG = "results.jsonl"
 
 
 def ghz_circuit(n: int) -> QuantumCircuit:
@@ -45,11 +48,24 @@ def ghz_fidelity(counts: dict, n: int) -> float:
     return good / sum(counts.values())
 
 
+def log_result(backend_name: str, n: int, fidelity: float, shots: int, run_timestamp: str):
+    entry = {
+        "timestamp": run_timestamp,
+        "backend": backend_name,
+        "n_qubits": n,
+        "fidelity": fidelity,
+        "shots": shots,
+    }
+    with open(RESULTS_LOG, "a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
 def run_benchmark(backend_name: str, sizes=(2, 3, 4, 5)) -> dict:
     provider = QIProvider()
     print("Available backends:", [b.name for b in provider.backends()])
     backend = provider.get_backend(backend_name)
     shots = min(SHOTS, backend.max_shots)
+    run_timestamp = datetime.now(timezone.utc).isoformat()
 
     results = {}
     for n in sizes:
@@ -59,6 +75,7 @@ def run_benchmark(backend_name: str, sizes=(2, 3, 4, 5)) -> dict:
         fid = ghz_fidelity(counts, n)
         results[n] = fid
         print(f"{backend_name} | {n} qubits | GHZ fidelity: {fid:.3f}")
+        log_result(backend_name, n, fid, shots, run_timestamp)
     return results
 
 

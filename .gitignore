@@ -4,4 +4,6 @@
 __pycache__/
 # result charts
 *.png
+# per-run benchmark history (local machine only — remove this line to version it)
+results.jsonl
 .venv/
