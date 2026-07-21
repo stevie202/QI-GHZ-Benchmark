@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from qiskit import QuantumCircuit
 
 RESULTS_LOG = Path("results.jsonl")
 
@@ -35,21 +36,92 @@ def load_results() -> pd.DataFrame:
     return df
 
 
+def ghz_circuit_figure(n: int = 3):
+    """A representative GHZ circuit (H + a CNOT chain) for the explainer panel."""
+    qc = QuantumCircuit(n, n)
+    qc.h(0)
+    for i in range(n - 1):
+        qc.cx(i, i + 1)
+    qc.measure(range(n), range(n))
+    return qc.draw(output="mpl")
+
+
+def ideal_histogram_figure():
+    """Illustrative (not measured) ideal outcome split — conceptual, not experiment data."""
+    fig = go.Figure(
+        go.Bar(
+            x=["|00…0⟩", "|11…1⟩"],
+            y=[0.5, 0.5],
+            marker_color="#2a78d6",
+            text=["50%", "50%"],
+            textposition="outside",
+            hovertemplate="%{x}<br>%{y:.0%} of shots<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title="Ideal (noiseless) outcome split",
+        yaxis_title="Share of shots",
+        yaxis_range=[0, 0.65],
+        showlegend=False,
+        height=320,
+        margin=dict(t=40, b=10),
+    )
+    return fig
+
+
 st.title("Quantum Inspire GHZ Fidelity Benchmark")
 st.caption(
     'Run `py -3.12 qi_bell_benchmark.py "<backend>"` to add data — this page reads results.jsonl.'
 )
 
-df = load_results()
+df_all = load_results()
 
-if df.empty:
+if df_all.empty:
     st.info("No results yet — run qi_bell_benchmark.py at least once to populate results.jsonl.")
     st.stop()
 
-backends_present = [b for b in BACKEND_COLORS if b in df["backend"].unique()]
+# --- About this experiment: summary + explainer graphics ---
+st.subheader("About this experiment")
+col_text, col_circuit, col_hist = st.columns([1.2, 1, 1])
+with col_text:
+    st.markdown(
+        """
+Each run entangles qubits into a **GHZ state** (a **Bell** state when n=2): a
+Hadamard on qubit 0, then a chain of CNOTs cascading down the register. Ideally,
+every measurement collapses to all-0s or all-1s — nothing in between.
+
+**Fidelity** is the fraction of shots landing in one of those two outcomes.
+On the QX emulator it stays close to 1.0. On real Tuna hardware it decays as
+circuit size grows: limited qubit connectivity forces extra SWAP gates during
+transpilation, and deeper circuits accumulate more noise.
+        """
+    )
+with col_circuit:
+    st.pyplot(ghz_circuit_figure(3))
+    st.caption("3-qubit GHZ circuit (same pattern for any size)")
+with col_hist:
+    st.plotly_chart(ideal_histogram_figure(), use_container_width=True)
+
+# --- At a glance: summary stats over the full logged history ---
+best = df_all.loc[df_all["fidelity"].idxmax()]
+worst = df_all.loc[df_all["fidelity"].idxmin()]
+stat_cols = st.columns(5)
+stat_cols[0].metric("Runs logged", df_all["timestamp"].nunique())
+stat_cols[1].metric("Backends tested", df_all["backend"].nunique())
+stat_cols[2].metric(f"Best fidelity ({best['backend']}, n={int(best['n_qubits'])})", f"{best['fidelity']:.3f}")
+stat_cols[3].metric(f"Worst fidelity ({worst['backend']}, n={int(worst['n_qubits'])})", f"{worst['fidelity']:.3f}")
+stat_cols[4].metric(
+    "Last run",
+    df_all["timestamp"].max().strftime("%b %d, %H:%M"),
+    help=df_all["timestamp"].max().strftime("%Y-%m-%d %H:%M:%S UTC"),
+)
+
+st.divider()
+
+backends_present = [b for b in BACKEND_COLORS if b in df_all["backend"].unique()]
 selected = st.sidebar.multiselect("Backends", backends_present, default=backends_present)
 
-df = df[df["backend"].isin(selected)]
+df = df_all[df_all["backend"].isin(selected)]
 if df.empty:
     st.warning("No backends selected.")
     st.stop()
@@ -57,6 +129,7 @@ if df.empty:
 show_legend = len(selected) > 1
 
 # --- KPI row: latest fidelity at the largest tested size, per backend ---
+st.subheader("Latest result per backend")
 cols = st.columns(len(selected))
 for col, backend in zip(cols, selected):
     sub = df[df["backend"] == backend]

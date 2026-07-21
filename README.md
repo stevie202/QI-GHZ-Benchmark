@@ -26,7 +26,7 @@ circuits accumulate more noise. That decay curve is the point of the project.
 - [pipx](https://pipx.pypa.io/stable/installation) (for installing the `qi` CLI)
 
 ````
-py -m pip install qiskit qiskit-quantuminspire matplotlib streamlit plotly pandas
+py -m pip install qiskit qiskit-quantuminspire matplotlib streamlit plotly pandas pylatexenc
 pipx install quantuminspire
 ````
 
@@ -76,11 +76,14 @@ mapping error.
 py -3.12 -m streamlit run dashboard.py
 ````
 
-Reads `results.jsonl` and shows, per backend: latest fidelity vs GHZ size,
-fidelity over time at the largest size tested (useful for spotting hardware
-drift/decay across days), and a raw results table. Filter backends from the
-sidebar. Run `qi_bell_benchmark.py` at least once first — the dashboard shows
-a message if the log is empty.
+Opens with a short explainer (GHZ circuit diagram, ideal outcome split, and
+at-a-glance stats across the full run history), then reads `results.jsonl`
+and shows, per backend: latest fidelity vs GHZ size, fidelity over time at
+the largest size tested (useful for spotting hardware drift/decay across
+days), and a raw results table. Filter backends from the sidebar. Run
+`qi_bell_benchmark.py` at least once first — the dashboard shows a message
+if the log is empty. `pylatexenc` (in the install line above) is what
+qiskit's circuit drawer needs to render the explainer diagram.
 
 ## Roadmap
 
