@@ -54,7 +54,10 @@ py qi_bell_benchmark.py "QX emulator"
 Pass one of `"QX emulator"`, `"Tuna-5"`, `"Ry emulator"`, `"Tuna-9"`, `"Tuna-17"`
 as the backend argument (quote names containing spaces). GHZ sizes default to
 2–5, except Tuna-17 which runs 2, 3, 5, 8, 12. Hardware jobs queue — expect a
-wait.
+wait; the script polls for up to 30 minutes per job and prints a progress
+line every minute so it doesn't look hung. If a job still hasn't finished
+after 30 minutes it's skipped (not the whole run) — check on it later with
+`qi results get <job_id>` (the job ID is printed when this happens).
 
 **Hardware note:** circuits must be transpiled to the chip's topology before
 submission — `transpile(qc, backend)` handles qubit mapping and SWAP routing.

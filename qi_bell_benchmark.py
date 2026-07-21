@@ -15,9 +15,12 @@ if SSL errors appear.
 
 import argparse
 import json
+import time
 from datetime import datetime, timezone
 
 from qiskit import QuantumCircuit, transpile
+from qiskit.providers.exceptions import JobTimeoutError
+from qiskit.providers.jobstatus import JOB_FINAL_STATES
 import matplotlib.pyplot as plt
 
 from qiskit_quantuminspire.qi_provider import QIProvider
@@ -28,6 +31,29 @@ DEFAULT_SIZES = {
     "Tuna-17": (2, 3, 5, 8, 12),
 }
 RESULTS_LOG = "results.jsonl"
+
+# job.result()'s own default timeout is a mere 60s — too short once a job queues
+# behind other users on real hardware. Poll ourselves instead, with progress
+# printed so a multi-minute wait doesn't look hung.
+JOB_TIMEOUT = 1800  # seconds
+POLL_EVERY = 15  # seconds between status checks
+PRINT_EVERY = 60  # seconds between progress lines
+
+
+def wait_for_job(job, timeout=JOB_TIMEOUT):
+    start = time.time()
+    last_print = start
+    status = job.status()
+    while status not in JOB_FINAL_STATES:
+        elapsed = time.time() - start
+        if elapsed >= timeout:
+            raise JobTimeoutError(f"Timed out after {timeout}s waiting for job {job.job_id()} ({status.name})")
+        if time.time() - last_print >= PRINT_EVERY:
+            print(f"  ...still {status.name.lower()} ({int(elapsed)}s elapsed)")
+            last_print = time.time()
+        time.sleep(POLL_EVERY)
+        status = job.status()
+    return status
 
 
 def ghz_circuit(n: int) -> QuantumCircuit:
@@ -71,6 +97,11 @@ def run_benchmark(backend_name: str, sizes=(2, 3, 4, 5)) -> dict:
     for n in sizes:
         qc = transpile(ghz_circuit(n), backend)
         job = backend.run(qc, shots=shots)
+        try:
+            wait_for_job(job)
+        except JobTimeoutError as e:
+            print(f"{backend_name} | {n} qubits | {e} — skipping (check later with `qi results get {job.job_id()}`)")
+            continue
         counts = job.result().get_counts()
         fid = ghz_fidelity(counts, n)
         results[n] = fid
