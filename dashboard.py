@@ -86,17 +86,18 @@ col_text, col_circuit, col_hist = st.columns([1.2, 1, 1])
 with col_text:
     st.markdown(
         """
-**New to quantum computing? Here's the short version:**
+**The Explainer**
 
-A **qubit** is the quantum version of a computer bit — like a coin that can
-land heads, tails, or (while still spinning) some mix of both. We link a
-few qubits together — called **entanglement** — so tightly that measuring
-one forces all the others to agree: they all come up "heads," or they all
-come up "tails," never a mix. That specific all-agree state is a **GHZ
-state** (or a **Bell state**, for just 2 qubits).
+A **qubit** is the quantum version of a computer bit. Like a tossed coin that 
+can land heads, tails, or (while still spinning) some mix of both. We can link 
+qubits together (**entanglement**) so tightly that measuring one forces all 
+the others to agree. All _heads_ or all _tails_, never a mix. 
 
-**Fidelity** is simply: out of everything we tried, how often did we
-actually get that perfect all-agree result? `1.000` = every single time.
+That specific "all-agree" state is a **GHZ state** (named after the physicists 
+who first described it, Greenberger–Horne–Zeilinger).
+
+**Fidelity** means out of everything we tried, how often did we actually 
+get that perfect all-agree result? `1.000` = every single time.
 Lower means noise crept in and broke the link before we could measure it.
 
 We run the same test on a perfect **emulator** (a noise-free simulation on
@@ -104,6 +105,12 @@ an ordinary computer — always near 1.000) and on QuTech's **real quantum
 chips** (Tuna-5/9/17), where physical imperfections make fidelity drop as
 we entangle more qubits. That drop is a live readout of how good the real
 hardware currently is.
+
+So, this experiment asks a simple question:
+
+**"Can this quantum computer keep a whole chain of qubits perfectly linked 
+together (and can I learn a thing or two about it)?**
+
         """
     )
     with st.expander("More technical detail"):
@@ -111,8 +118,8 @@ hardware currently is.
             """
 Each run builds the GHZ state as: a Hadamard on qubit 0, then a chain of
 CNOTs cascading down the register. Ideally every measurement collapses to
-all-0s or all-1s — nothing in between — and fidelity is the fraction of
-shots landing in one of those two outcomes.
+all-0s or all-1s and fidelity is the fraction of shots landing in one of 
+those two outcomes.
 
 On real Tuna hardware, fidelity decays as circuit size grows: limited
 qubit connectivity forces extra SWAP gates during transpilation, and
